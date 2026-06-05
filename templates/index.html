@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeleHarvest — Telegram Member Scraper</title>
+  <meta name="description" content="Professional Telegram group member scraper, mass DM sender, and account manager dashboard." />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.95c-.12.58-.48.72-.97.45l-2.69-1.98-1.3 1.25c-.14.14-.27.27-.55.27l.2-2.74 4.99-4.51c.22-.19-.05-.3-.34-.11L7.43 14.1 4.79 13.27c-.58-.18-.59-.58.12-.86l9.01-3.47c.48-.18.91.12.72.86z" fill="currentColor"/>
+        </svg>
+      </div>
+      <span class="logo-text">TeleHarvest</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="accounts" id="nav-accounts">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        <span>Accounts</span>
+      </a>
+      <a href="#" class="nav-item" data-page="scraper" id="nav-scraper">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <span>Scraper</span>
+      </a>
+      <a href="#" class="nav-item" data-page="sender" id="nav-sender">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        <span>Mass DM</span>
+      </a>
+      <a href="#" class="nav-item" data-page="adder" id="nav-adder">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        <span>Group Adder</span>
+      </a>
+      <a href="#" class="nav-item" data-page="poster" id="nav-poster">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/></svg>
+        <span>Auto-Poster</span>
+      </a>
+      <a href="#" class="nav-item" data-page="exports" id="nav-exports">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        <span>Exports</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="status-dot" id="socket-status-dot"></div>
+      <span class="status-label" id="socket-status-label">Connecting…</span>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content">
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Account Manager</h1>
+        <p class="page-subtitle" id="page-subtitle">Manage your Telegram sessions</p>
+      </div>
+      <div class="topbar-right">
+        <div class="accounts-badge" id="accounts-badge">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+          <span id="account-count">0</span> accounts
+        </div>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════ ACCOUNTS PAGE ══════════════════════════ -->
+    <section class="page active" id="page-accounts">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Add New Account</h2>
+          <p class="card-subtitle">Connect via phone number + OTP</p>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input class="form-input" type="text" id="acc-phone" placeholder="+66812345678" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">API ID <a href="https://my.telegram.org" target="_blank" class="link-small">my.telegram.org →</a></label>
+            <input class="form-input" type="text" id="acc-api-id" value="1738362" placeholder="12345678" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">API Hash</label>
+            <input class="form-input" type="text" id="acc-api-hash" value="37206d15ce9313fc197ae9b31d86d655" placeholder="abcdef1234567890abcdef1234567890" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-send-otp" onclick="sendOTP()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.95c-.12.58-.48.72-.97.45l-2.69-1.98-1.3 1.25c-.14.14-.27.27-.55.27l.2-2.74 4.99-4.51c-.22-.19-.05-.3.34-.11L7.43 14.1 4.79 13.27c-.58-.18-.59-.58.12-.86l9.01-3.47c.48-.18.91.12.72.86z"/></svg>
+            Send OTP
+          </button>
+        </div>
+
+        <!-- OTP Step -->
+        <div class="otp-section hidden" id="otp-section">
+          <div class="divider"><span>Enter OTP</span></div>
+          <div class="form-grid cols-2">
+            <div class="form-group">
+              <label class="form-label">OTP Code</label>
+              <input class="form-input" type="text" id="acc-otp" placeholder="12345" maxlength="8" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">2FA Password (if needed)</label>
+              <input class="form-input" type="password" id="acc-2fa" placeholder="optional" />
+            </div>
+          </div>
+          <button class="btn btn-success" onclick="verifyOTP()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Verify & Connect
+          </button>
+        </div>
+      </div>
+
+      <!-- Accounts List -->
+      <div class="card animate-in delay-1">
+        <div class="card-header">
+          <h2 class="card-title">Connected Accounts</h2>
+          <button class="btn btn-ghost" onclick="refreshAccounts()">↻ Refresh</button>
+        </div>
+        <div id="accounts-list" class="accounts-grid">
+          <div class="empty-state">
+            <div class="empty-icon">👤</div>
+            <p>No accounts yet</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ SCRAPER PAGE ═══════════════════════════ -->
+    <section class="page" id="page-scraper">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Group Member Scraper</h2>
+          <p class="card-subtitle">Extract all members from a Telegram group or channel</p>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="scrape-phone"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Group URL / Username</label>
+            <input class="form-input" type="text" id="scrape-group" placeholder="@groupname or t.me/groupname" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Members</label>
+            <input class="form-input" type="number" id="scrape-limit" value="500" min="10" max="10000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filter by Activity</label>
+            <select class="form-select" id="scrape-filter">
+              <option value="all">All Members (No Filter)</option>
+              <option value="active">Active Recently (Online, Recently, Last Week)</option>
+              <option value="online">Online Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-preview-group" onclick="previewGroup()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            Preview Group
+          </button>
+          <button class="btn btn-primary" id="btn-start-scrape" onclick="startScrape()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+            Start Scraping
+          </button>
+        </div>
+
+        <!-- Group Info Card -->
+        <div class="info-box hidden" id="group-info-box"></div>
+      </div>
+
+      <!-- Progress Card -->
+      <div class="card animate-in delay-1" id="scrape-progress-card" style="display:none;">
+        <div class="card-header">
+          <h2 class="card-title" id="scrape-status-title">Scraping…</h2>
+          <div class="task-badge running" id="scrape-task-badge">RUNNING</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="scrape-progress-fill" style="width:0%"></div>
+          </div>
+          <div class="progress-stats">
+            <span id="scrape-progress-text">0 / 0 members</span>
+            <span id="scrape-progress-pct">0%</span>
+          </div>
+        </div>
+        <div class="log-box" id="scrape-log" style="margin-top: 16px;"></div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" id="btn-export-scrape" onclick="exportScrape()" disabled>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            Download CSV
+          </button>
+          <button class="btn btn-accent" id="btn-use-for-dm" onclick="useForDM()" disabled>
+            Use for Mass DM →
+          </button>
+        </div>
+      </div>
+
+      <div class="card animate-in delay-2" id="members-table-card" style="display:none;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
+          <div>
+            <h2 class="card-title">Scraped Members</h2>
+            <span class="badge" id="member-count-badge">0 members</span>
+          </div>
+          <input class="form-input" type="text" id="member-search" placeholder="🔍 Search members..." oninput="filterMembersTable()" style="max-width: 250px; padding: 8px 14px; font-size: 13px; margin: 0;" />
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="members-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Phone</th>
+                <th>ID</th>
+              </tr>
+            </thead>
+            <tbody id="members-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ SENDER PAGE ════════════════════════════ -->
+    <section class="page" id="page-sender">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Mass DM Sender</h2>
+          <p class="card-subtitle">Send personalized messages to scraped members</p>
+        </div>
+
+        <div class="warning-banner">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <span>Use with care — sending too many DMs may result in account restrictions. Keep delay ≥ 5s.</span>
+        </div>
+
+        <div class="form-grid cols-2">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="dm-phone"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Members Source (Scrape Task)</label>
+            <select class="form-select" id="dm-task-id">
+              <option value="">— select scrape task —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Delay Between Messages (seconds)</label>
+            <input class="form-input" type="number" id="dm-delay" value="5" min="3" max="120" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-textarea" id="dm-message" placeholder="Hello! I wanted to reach out to you…" rows="5"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-start-dm" onclick="startDM()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            Start Sending
+          </button>
+        </div>
+      </div>
+
+      <!-- DM Progress -->
+      <div class="card animate-in delay-1" id="dm-progress-card" style="display:none;">
+        <div class="card-header">
+          <h2 class="card-title">Sending Progress</h2>
+          <div class="task-badge running" id="dm-task-badge">RUNNING</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="dm-progress-fill" style="width:0%"></div>
+          </div>
+          <div class="progress-stats">
+            <span id="dm-progress-text">0 / 0</span>
+            <span id="dm-progress-pct">0%</span>
+          </div>
+        </div>
+        <div class="dm-stats-row">
+          <div class="dm-stat green"><span id="dm-sent">0</span><label>Sent ✅</label></div>
+          <div class="dm-stat red"><span id="dm-failed">0</span><label>Failed ❌</label></div>
+        </div>
+        <div class="log-box" id="dm-log"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ ADDER PAGE ════════════════════════════ -->
+    <section class="page" id="page-adder">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Group Member Adder (Invite Tool)</h2>
+          <p class="card-subtitle">Add scraped members into your own Telegram group/channel</p>
+        </div>
+
+        <div class="warning-banner">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <span>Adding members is highly restricted by Telegram. Use a safe delay (≥ 30s) to prevent your account from getting banned.</span>
+        </div>
+
+        <div class="form-grid cols-3">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="adder-phone"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Source Scraped List</label>
+            <select class="form-select" id="adder-task-id">
+              <option value="">— select scrape task —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Group username / URL</label>
+            <input class="form-input" type="text" id="adder-target-group" placeholder="@mygroup or t.me/mygroup" />
+          </div>
+        </div>
+        <div class="form-grid cols-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Delay Between Invites (seconds)</label>
+            <input class="form-input" type="number" id="adder-delay" value="30" min="10" max="300" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-start-adder" onclick="startAdder()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Start Adding
+          </button>
+        </div>
+      </div>
+
+      <!-- Adder Progress -->
+      <div class="card animate-in delay-1" id="adder-progress-card" style="display:none;">
+        <div class="card-header">
+          <h2 class="card-title">Adding Progress</h2>
+          <div class="task-badge running" id="adder-task-badge">RUNNING</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="adder-progress-fill" style="width:0%"></div>
+          </div>
+          <div class="progress-stats">
+            <span id="adder-progress-text">0 / 0</span>
+            <span id="adder-progress-pct">0%</span>
+          </div>
+        </div>
+        <div class="dm-stats-row">
+          <div class="dm-stat green"><span id="adder-added">0</span><label>Added ✅</label></div>
+          <div class="dm-stat red"><span id="adder-failed">0</span><label>Failed ❌</label></div>
+        </div>
+        <div class="log-box" id="adder-log"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ POSTER PAGE ════════════════════════════ -->
+    <section class="page" id="page-poster">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Channel Auto-Poster / Message Forwarder</h2>
+          <p class="card-subtitle">Forward messages from source channels or groups in real-time</p>
+        </div>
+
+        <div class="form-grid cols-3">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <select class="form-select" id="poster-phone"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Source Channel username / URL</label>
+            <input class="form-input" type="text" id="poster-source" placeholder="@sourcegroup" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Channel username / URL</label>
+            <input class="form-input" type="text" id="poster-target" placeholder="@targetgroup" />
+          </div>
+        </div>
+
+        <div class="form-grid cols-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Include Keywords Filter</label>
+            <input class="form-input" type="text" id="poster-keywords" placeholder="promo, discount, sale (comma separated)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exclude Keywords Filter</label>
+            <input class="form-input" type="text" id="poster-exclude" placeholder="spam, scammed (comma separated)" />
+          </div>
+        </div>
+
+        <div class="form-grid cols-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Edit 1: Find Link or Text</label>
+            <input class="form-input" type="text" id="poster-replace-find" placeholder="e.g. @source_group or https://oldlink.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Edit 1: Replace With</label>
+            <input class="form-input" type="text" id="poster-replace-with" placeholder="e.g. @my_group or https://mylink.com" />
+          </div>
+        </div>
+
+        <div class="form-grid cols-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Edit 2: Find Link or Text</label>
+            <input class="form-input" type="text" id="poster-replace-find-2" placeholder="e.g. @second_group or https://anotherlink.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Edit 2: Replace With</label>
+            <input class="form-input" type="text" id="poster-replace-with-2" placeholder="e.g. @my_second_group or https://my_other_link.com" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-start-poster" onclick="startPoster()">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>
+            Start Monitoring
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Forwarders -->
+      <div class="card animate-in delay-1">
+        <div class="card-header">
+          <h2 class="card-title">Active Forwarders</h2>
+        </div>
+        <div id="active-forwarders-list">
+          <div class="empty-state">
+            <div class="empty-icon">📡</div>
+            <p>No active message forwarders running</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forwarder Real-time log -->
+      <div class="card animate-in delay-2" id="poster-log-card" style="display:none;">
+        <div class="card-header">
+          <h2 class="card-title">Forwarder Logs</h2>
+        </div>
+        <div class="log-box" id="poster-log"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════ EXPORTS PAGE ═══════════════════════════ -->
+    <section class="page" id="page-exports">
+      <div class="card animate-in">
+        <div class="card-header">
+          <h2 class="card-title">Export Files</h2>
+          <button class="btn btn-ghost" onclick="refreshExports()">↻ Refresh</button>
+        </div>
+        <div id="exports-list">
+          <div class="empty-state">
+            <div class="empty-icon">📁</div>
+            <p>No export files yet</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Toast Container ── -->
+  <div id="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
