@@ -42,9 +42,11 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SESSIONS_DIR = os.path.join(BASE_DIR, "sessions")
-DATA_DIR = os.path.join(BASE_DIR, "data")
-EXPORTS_DIR = os.path.join(BASE_DIR, "exports")
+STORAGE_DIR = os.environ.get("STORAGE_DIR", BASE_DIR)
+
+SESSIONS_DIR = os.path.join(STORAGE_DIR, "sessions")
+DATA_DIR = os.path.join(STORAGE_DIR, "data")
+EXPORTS_DIR = os.path.join(STORAGE_DIR, "exports")
 ACCOUNTS_FILE = os.path.join(DATA_DIR, "accounts.json")
 
 for d in [SESSIONS_DIR, DATA_DIR, EXPORTS_DIR]:
@@ -815,4 +817,5 @@ def on_connect():
 
 if __name__ == "__main__":
     connect_saved_accounts()
-    socketio.run(app, host="0.0.0.0", port=5080, debug=True, use_reloader=False)
+    port = int(os.environ.get("PORT", 5080))
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, use_reloader=False)

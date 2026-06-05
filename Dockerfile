@@ -14,6 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
+# Create storage directory for persistence
+RUN mkdir -p /app/storage
+ENV STORAGE_DIR=/app/storage
+
 # Expose the port the app runs on
 EXPOSE 5080
 

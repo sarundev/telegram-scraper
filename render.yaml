@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: telegram-scraper
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PORT
+        value: 5080
+      - key: STORAGE_DIR
+        value: /opt/render/project/src/storage
+      - key: PYTHON_VERSION
+        value: 3.9.0
+    disk:
+      name: bot-data
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
