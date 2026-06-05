@@ -102,6 +102,9 @@ def log_request_info():
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    from werkzeug.exceptions import NotFound
+    if isinstance(e, NotFound):
+        return jsonify({"error": str(e)}), 404
     import traceback
     print("🚨 SERVER EXCEPTION:", flush=True)
     traceback.print_exc()
